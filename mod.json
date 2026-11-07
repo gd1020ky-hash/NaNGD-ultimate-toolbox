@@ -1,0 +1,138 @@
+{
+  "geode": "5.11.2",
+  "gd": {
+    "win": "2.2081",
+    "android": "2.2081",
+    "mac": "2.2081",
+    "ios": "2.2081"
+  },
+  "id": "gd1020ky.ultimate_toolbox",
+  "name": "NaNGD Ultimate Toolbox",
+  "version": "v1.3.0",
+  "developer": "gd1020ky",
+  "description": "The ultimate Geometry Dash utility suite: Hitboxes, Practice Music Sync, Noclip, Speedhack + Audio Sync, Frame Analysis, Frame Window Counter, NanGD Bell Click, HUD, and Safe Mode.",
+  "repository": "https://github.com/gd1020ky-hash/NaNGD-ultimate-toolbox",
+  "tags": [
+    "utility",
+    "gameplay",
+    "customization"
+  ],
+  "resources": {
+    "files": [
+      "resources/*.wav",
+      "resources/*.ogg"
+    ]
+  },
+  "settings": {
+    "safe-mode": {
+      "name": "Safe Mode",
+      "description": "Blocks level completion and star submissions when cheats are active.",
+      "type": "bool",
+      "default": true
+    },
+    "noclip": {
+      "name": "Noclip",
+      "description": "Prevents player destruction upon hitting hazards.",
+      "type": "bool",
+      "default": false
+    },
+    "show-hitboxes": {
+      "name": "Show Hitboxes",
+      "description": "Renders collision boxes for player, hazards, orbs, and blocks.",
+      "type": "bool",
+      "default": false
+    },
+    "practice-music-sync": {
+      "name": "Practice Music Sync",
+      "description": "Plays normal level music in practice mode instead of the practice theme.",
+      "type": "bool",
+      "default": true
+    },
+    "speedhack-enabled": {
+      "name": "Enable Speedhack",
+      "description": "Modifies game time scale.",
+      "type": "bool",
+      "default": false
+    },
+    "speedhack-rate": {
+      "name": "Speedhack Speed",
+      "description": "Game time scale multiplier (0.1x to 3.0x).",
+      "type": "float",
+      "default": 1.0,
+      "min": 0.1,
+      "max": 3.0
+    },
+    "speedhack-audio-sync": {
+      "name": "Speedhack Audio Sync",
+      "description": "Syncs background music playback speed with the speedhack rate.",
+      "type": "bool",
+      "default": true
+    },
+    "confirm-exit": {
+      "name": "Confirm Exit on High %",
+      "description": "Prompts confirmation before leaving a level if past 75% progress.",
+      "type": "bool",
+      "default": true
+    },
+    "bell-click-sound": {
+      "name": "NanGD Bell Click Sound",
+      "description": "Plays the iconic metallic desk bell sound on every click.",
+      "type": "bool",
+      "default": false
+    },
+    "frame-analysis-enabled": {
+      "name": "High Accuracy Frame Analysis",
+      "description": "Measures microsecond frametimes, frametime jitter, and 1% low FPS.",
+      "type": "bool",
+      "default": true
+    },
+    "frame-window-counter": {
+      "name": "Frame Window Counter",
+      "description": "Tracks physics ticks, input frame delta, and sub-frame click offsets.",
+      "type": "bool",
+      "default": true
+    },
+    "show-hud": {
+      "name": "Show HUD Overlay",
+      "description": "Displays live in-game diagnostic telemetry.",
+      "type": "bool",
+      "default": true
+    },
+    "hud-show-fps": {
+      "name": "HUD: Show FPS",
+      "description": "Show average FPS on the HUD.",
+      "type": "bool",
+      "default": true
+    },
+    "hud-show-cps": {
+      "name": "HUD: Show CPS",
+      "description": "Show live clicks-per-second on the HUD.",
+      "type": "bool",
+      "default": true
+    },
+    "hud-accurate-percent": {
+      "name": "HUD: Accurate Percentage",
+      "description": "Displays level completion with 2 decimal places.",
+      "type": "bool",
+      "default": true
+    },
+    "instant-respawn": {
+      "name": "Instant Respawn",
+      "description": "Restarts immediately on death without animation delay.",
+      "type": "bool",
+      "default": false
+    },
+    "rainbow-trail": {
+      "name": "Rainbow Trail",
+      "description": "Continuously cycles wave & player motion streak colors.",
+      "type": "bool",
+      "default": false
+    },
+    "hide-playlayer-ui": {
+      "name": "Clean Screen (Hide UI)",
+      "description": "Hides default progress bar and buttons during gameplay.",
+      "type": "bool",
+      "default": false
+    }
+  }
+}
