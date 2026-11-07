@@ -12,20 +12,21 @@
 
 using namespace geode::prelude;
 
-// ============================================================================
-// 1. PlayLayer Hooks (Noclip, Hitboxes, Practice Sync, Keybinds, Safe Mode)
-// ============================================================================
+// --- Gameplay & Level Management (Noclip, Hitboxes, Practice Sync, Safe Mode) ---
 class $modify(ToolboxPlayLayer, PlayLayer) {
     bool init(GJGameLevel* level, bool useReplay, bool dontCreateObjects) {
         if (!PlayLayer::init(level, useReplay, dontCreateObjects)) return false;
 
+        // Reset our counters and analyzer for the new level attempt
         Toolbox::get().resetClicks();
         Toolbox::get().resetAttemptState();
         FrameAnalyzer::get().resetAttempt();
 
+        // Attach our HUD overlay
         auto hud = HUDOverlay::create();
         this->addChild(hud);
 
+        // Clean screen option: hides default percentage and progress bar
         if (Mod::get()->getSettingValue<bool>("hide-playlayer-ui")) {
             if (auto pUI = this->getChildByID("percentage-label")) pUI->setVisible(false);
             if (auto pBar = this->getChildByID("progress-bar")) pBar->setVisible(false);
@@ -40,6 +41,7 @@ class $modify(ToolboxPlayLayer, PlayLayer) {
     }
 
     void update(float dt) {
+        // Feed the high-precision frame analyzer
         FrameAnalyzer::get().onRenderFrameStart();
         FrameAnalyzer::get().onPhysicsStep();
 
@@ -47,6 +49,7 @@ class $modify(ToolboxPlayLayer, PlayLayer) {
             Toolbox::get().markCheatUsed();
         }
 
+        // Toggle debug hitboxes visualizer
         if (this->m_debugDrawNode) {
             this->m_debugDrawNode->setVisible(Toolbox::get().isHitboxesEnabled());
         }
@@ -54,28 +57,20 @@ class $modify(ToolboxPlayLayer, PlayLayer) {
         PlayLayer::update(dt);
     }
 
-    void togglePracticeMode(bool practice) {
-        PlayLayer::togglePracticeMode(practice);
-
-        if (practice && Toolbox::get().isPracticeMusicSyncEnabled() && this->m_level) {
-            GameSoundManager::sharedManager()->stopBackgroundMusic();
-            GameSoundManager::sharedManager()->playBackgroundMusic(
-                this->m_level->getAudioFileName(),
-                false,
-                true
-            );
-        }
-    }
-
-    void keyDown(enumKeyCodes key) {
-        if (key == KEY_Tab || key == KEY_C) {
-            ToolboxPopup::create()->show();
+    // Practice music sync: bypass RobTop's default practice music by briefly
+    // flipping m_isPracticeMode so GD starts the real song at the checkpoint offset!
+    void startMusic() {
+        if (this->m_isPracticeMode && Toolbox::get().isPracticeMusicSyncEnabled()) {
+            this->m_isPracticeMode = false;
+            PlayLayer::startMusic();
+            this->m_isPracticeMode = true;
             return;
         }
-        PlayLayer::keyDown(key);
+        PlayLayer::startMusic();
     }
 
     void destroyPlayer(PlayerObject* player, GameObject* hazard) {
+        // Noclip: ignore hazard deaths
         if (Toolbox::get().isNoclipEnabled()) {
             Toolbox::get().markCheatUsed();
             return;
@@ -83,15 +78,17 @@ class $modify(ToolboxPlayLayer, PlayLayer) {
 
         PlayLayer::destroyPlayer(player, hazard);
 
+        // Instant respawn: skip the death delay
         if (Mod::get()->getSettingValue<bool>("instant-respawn")) {
             this->resetLevel();
         }
     }
 
     void levelComplete() {
+        // Safe Mode: block completion submission if cheats were touched during this attempt
         if (Toolbox::get().isSafeModeEnabled() && (Toolbox::get().areCheatsActive() || Toolbox::get().hasCheatedThisAttempt())) {
-            log::warn("Safe Mode Active: High score submission suppressed.");
-            Notification::create("Safe Mode: Completion not submitted!", NotificationIcon::Warning)->show();
+            log::warn("Safe Mode: High score submission blocked to keep stats legit.");
+            Notification::create("Safe Mode: Level completion not submitted!", NotificationIcon::Warning)->show();
             this->resetLevel();
             return;
         }
@@ -100,9 +97,7 @@ class $modify(ToolboxPlayLayer, PlayLayer) {
     }
 };
 
-// ============================================================================
-// 2. PlayerObject Hooks (Input Timing, NanGD Bell Sound, CPS & Rainbow Trail)
-// ============================================================================
+// --- Player Inputs & Visual Effects (Clicks, Bell Sound, Rainbow Trail) ---
 class $modify(ToolboxPlayerObject, PlayerObject) {
     struct Fields {
         float m_rainbowHue = 0.0f;
@@ -114,6 +109,7 @@ class $modify(ToolboxPlayerObject, PlayerObject) {
         Toolbox::get().recordClick();
         FrameAnalyzer::get().recordClick();
 
+        // Play the satisfying NanGD metallic desk bell click sound!
         if (Mod::get()->getSettingValue<bool>("bell-click-sound")) {
             auto soundPath = Mod::get()->getResourcesDir() / "bell.wav";
             if (!std::filesystem::exists(soundPath)) {
@@ -128,6 +124,7 @@ class $modify(ToolboxPlayerObject, PlayerObject) {
     void update(float dt) {
         PlayerObject::update(dt);
 
+        // Smooth HSV rainbow cycling for trails
         if (Mod::get()->getSettingValue<bool>("rainbow-trail")) {
             m_fields->m_rainbowHue += dt * 180.f;
             if (m_fields->m_rainbowHue >= 360.f) m_fields->m_rainbowHue -= 360.f;
@@ -149,19 +146,19 @@ class $modify(ToolboxPlayerObject, PlayerObject) {
                 static_cast<GLubyte>(b * 255)
             };
 
-            if (m_motionStreak) m_motionStreak->setColor(rainbowColor);
-            if (m_waveTrail) m_waveTrail->setColor(rainbowColor);
+            if (this->m_motionStreak) {
+                this->m_motionStreak->setColor(rainbowColor);
+            }
         }
     }
 };
 
-// ============================================================================
-// 3. PauseLayer Hooks (Confirm Exit, Hotkey, Pause Menu Button)
-// ============================================================================
+// --- Pause Menu Integration (Confirm Exit & Toolbox Button) ---
 class $modify(ToolboxPauseLayer, PauseLayer) {
     void customSetup() {
         PauseLayer::customSetup();
 
+        // Place our golden Toolbox button in the pause menu
         auto menu = this->getChildByID("right-button-menu");
         if (!menu) menu = this->getChildByID("center-button-menu");
 
@@ -178,25 +175,18 @@ class $modify(ToolboxPauseLayer, PauseLayer) {
         }
     }
 
-    void keyDown(enumKeyCodes key) {
-        if (key == KEY_Tab || key == KEY_C) {
-            ToolboxPopup::create()->show();
-            return;
-        }
-        PauseLayer::keyDown(key);
-    }
-
     void onQuit(CCObject* sender) {
         auto playLayer = PlayLayer::get();
         bool confirmExit = Mod::get()->getSettingValue<bool>("confirm-exit");
 
+        // Prevent accidental exits on high percentages
         if (confirmExit && playLayer && playLayer->getCurrentPercent() >= 75.0f) {
             float percent = playLayer->getCurrentPercent();
             geode::createQuickPopup(
                 "Confirm Exit",
                 fmt::format("You are at <cr>{:.1f}%</c>!\nAre you sure you want to quit?", percent),
                 "Cancel", "Quit",
-                [this, sender](auto*, bool btn2) {
+                [this, sender](<auto*, bool btn2>) {
                     if (btn2) {
                         PauseLayer::onQuit(sender);
                     }
@@ -213,13 +203,12 @@ class $modify(ToolboxPauseLayer, PauseLayer) {
     }
 };
 
-// ============================================================================
-// 4. Main Menu Integration
-// ============================================================================
+// --- Main Menu Integration (Hammer Button) ---
 class $modify(ToolboxMenuLayer, MenuLayer) {
     bool init() {
         if (!MenuLayer::init()) return false;
 
+        // Add a cute hammer button to the bottom menu bar
         auto bottomMenu = this->getChildByID("bottom-menu");
         if (bottomMenu) {
             auto sprite = CCSprite::createWithSpriteFrameName("GJ_hammerIcon_001.png");
